@@ -7,6 +7,9 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.content.Intent;
+import android.net.Uri;
+import android.app.Activity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +22,7 @@ import java.util.regex.Pattern;
 
 public class BrowserClient extends WebViewClient {
     private Pattern invalidUrlPattern = null;
+    private Activity activity = null;
 
     public BrowserClient() {
         this(null);
@@ -29,6 +33,11 @@ public class BrowserClient extends WebViewClient {
         if (invalidUrlRegex != null) {
             invalidUrlPattern = Pattern.compile(invalidUrlRegex);
         }
+    }
+
+    public BrowserClient(Activity activity) {
+        super();
+        this.activity = activity；
     }
 
     public void updateInvalidUrlRegex(String invalidUrlRegex) {
@@ -112,6 +121,16 @@ public class BrowserClient extends WebViewClient {
         if (invalidUrlPattern == null) {
             return false;
         } else {
+            try {
+                if (url != null &&  (url.startsWith("weixin://") || url.startsWith("alipays://"))) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    startActivity(intent);
+                    return true;
+                }
+            } catch (Exception e) {
+                return false;
+            }
+
             Matcher matcher = invalidUrlPattern.matcher(url);
             return matcher.lookingAt();
         }

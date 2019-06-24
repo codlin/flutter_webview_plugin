@@ -125,7 +125,7 @@ class WebviewManager {
         this.activity = activity;
         this.context = context;
         this.resultHandler = new ResultHandler();
-        webViewClient = new BrowserClient();
+        webViewClient = new BrowserClient(activity);
         webView.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
