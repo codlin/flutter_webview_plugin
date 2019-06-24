@@ -122,7 +122,10 @@ public class BrowserClient extends WebViewClient {
             return false;
         } else {
             try {
-                if (url != null &&  (url.startsWith("weixin://wap/pay") || url.startsWith("alipay://alipayclient/"))) {
+                if (url != null 
+                    && (url.contains("weixin://wap/pay?")
+                        || url.contains("platformapi/startApp")
+                        || url.contains("alipay://alipayclient/"))) {
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                     startActivity(intent);
                     return true;
