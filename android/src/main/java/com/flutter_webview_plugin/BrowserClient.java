@@ -10,6 +10,7 @@ import android.webkit.WebViewClient;
 import android.content.Intent;
 import android.net.Uri;
 import android.app.Activity;
+import android.widget.Toast;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,10 +25,6 @@ public class BrowserClient extends WebViewClient {
     private Pattern invalidUrlPattern = null;
     private Activity activity = null;
 
-    public BrowserClient() {
-        this(null);
-    }
-
     public BrowserClient(String invalidUrlRegex) {
         super();
         if (invalidUrlRegex != null) {
@@ -37,7 +34,7 @@ public class BrowserClient extends WebViewClient {
 
     public BrowserClient(Activity activity) {
         super();
-        this.activity = activity；
+        this.activity = activity;
     }
 
     public void updateInvalidUrlRegex(String invalidUrlRegex) {
@@ -76,7 +73,7 @@ public class BrowserClient extends WebViewClient {
         // returning true causes the current WebView to abort loading the URL,
         // while returning false causes the WebView to continue loading the URL as usual.
         String url = request.getUrl().toString();
-        boolean isInvalid = checkInvalidUrl(url);
+        boolean isInvalid = checkInvalidUrl(view, url);
         Map<String, Object> data = new HashMap<>();
         data.put("url", url);
         data.put("type", isInvalid ? "abortLoad" : "shouldStart");
@@ -89,7 +86,7 @@ public class BrowserClient extends WebViewClient {
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
         // returning true causes the current WebView to abort loading the URL,
         // while returning false causes the WebView to continue loading the URL as usual.
-        boolean isInvalid = checkInvalidUrl(url);
+        boolean isInvalid = checkInvalidUrl(view, url);
         Map<String, Object> data = new HashMap<>();
         data.put("url", url);
         data.put("type", isInvalid ? "abortLoad" : "shouldStart");
@@ -117,21 +114,30 @@ public class BrowserClient extends WebViewClient {
         FlutterWebviewPlugin.channel.invokeMethod("onHttpError", data);
     }
 
-    private boolean checkInvalidUrl(String url) {
+    private boolean checkInvalidUrl(WebView view, String url) {
         if (invalidUrlPattern == null) {
             return false;
         } else {
             try {
                 if (url != null 
-                    && (url.contains("weixin://wap/pay?")
-                        || url.contains("platformapi/startApp")
-                        || url.contains("alipay://alipayclient/"))) {
+                    && (url.startsWith("weixin://wap/pay?")
+                        || url.startsWith("alipays:")
+                        || url.startsWith("alipay")
+                        )
+                    )  {
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                    startActivity(intent);
+                    view.getContext().startActivity(intent);
                     return true;
                 }
             } catch (Exception e) {
-                return false;
+                e.printStackTrace();
+                if (url.startsWith("alipay")) {
+                    Toast.makeText(view.getContext(), "请确认是否安装支付宝", Toast.LENGTH_SHORT).show();
+                }else if (url.startsWith("weixin")) {
+                    Toast.makeText(view.getContext(), "请确认是否安装微信", Toast.LENGTH_SHORT).show();
+                }
+
+                return true;
             }
 
             Matcher matcher = invalidUrlPattern.matcher(url);
